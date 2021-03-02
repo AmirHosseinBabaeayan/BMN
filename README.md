@@ -2,7 +2,7 @@
 
 Bonyad Meli Nokhbegan Project
 
-## Qt Application for detect object 
+## Qt Application for Object Detection
 
 Team :
 M. Mosannafat
