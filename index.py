@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 import sys
 import os
@@ -8,16 +9,47 @@ from PyQt5.QtGui import *
 from PyQt5.uic import *
 import pyqtgraph as pg
 from PyQt5.QtChart import QChart, QChartView, QPieSeries, QPieSlice
-
+import MySQLdb
 from PyQt5.uic import loadUiType
 import jdatetime
 import datetime
 
-from icons import icons_rc
+# from icons import icons_rc
 
-import MySQLdb
+# ui,_ = loadUiType('mainwindow2.ui')
+login, _ = loadUiType('login.ui')
+first_name = bytes()
+last_name = bytes()
+class Login(QWidget, login):
+    def __init__(self):
+        QWidget.__init__(self)
+        self.setupUi(self)
+        self.login_btn.clicked.connect(self.handle_login)
 
-#ui,_ = loadUiType('mainwindow2.ui')
+    def handle_login(self):
+            global first_name
+            global last_name
+            username = self.username.text()
+            password = self.password.text()
+            self.db = MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+            self.cur = self.db.cursor()
+            self.cur.execute('''SET character_set_results=utf8;''')
+            self.cur.execute('''SET character_set_client=utf8;''')
+            self.cur.execute('''SET character_set_connection=utf8;''')
+            self.cur.execute('''SET character_set_database=utf8;''')
+            self.cur.execute('''SET character_set_server=utf8;''')
+            sql = ''' SELECT * FROM users '''
+            self.cur.execute(sql)
+            data = self.cur.fetchall()
+            for row in data:
+                if username == row[1] and password == row[4]:
+                    print('user match')
+                    first_name = row[2]
+                    print(type(first_name))
+                    last_name = row[3]
+                    self.window2 = MainApp()
+                    self.close()
+                    self.window2.show()
 
 class MainApp(QMainWindow,QtWidgets.QDialog):
     
@@ -39,11 +71,11 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.player = QtMultimedia.QMediaPlayer(None, QtMultimedia.QMediaPlayer.VideoSurface)
         self.tabWidget.setCurrentIndex(0)
         self.help_tabWidget.setCurrentIndex(0)
-        file = os.path.join(os.path.dirname(__file__), "small.mp4")
+        file = os.path.join(os.path.dirname(__file__), "small1.mp4")
         self.player.setMedia(QtMultimedia.QMediaContent(QtCore.QUrl.fromLocalFile(file)))
         self.player.setVideoOutput(self.ui.widget)
         self.player.play()
-
+        self.getUser()
         ################################
         
         self.setLineGraph()
@@ -52,10 +84,58 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.handleUiChanges()
         self.handleButtons()
 
+        self.show_users_table_data()
+        self.show_products_table_data()
         ################################
         
+    def show_users_table_data(self):
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='-----', db='---')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        sql = ''' SELECT * FROM users '''
+        self.cur.execute(sql)
+        data = self.cur.fetchall()
+        self.users_details_table.setRowCount(0)
+        for row_num, row_data in enumerate(data):
+            # print(row_num, "---", row_data)
+            self.users_details_table.insertRow(row_num)
+            # for column_num, data in enumerate(row_data):
+            #     print(column_num, "---", data)
+            self.users_details_table.setItem(row_num, 0, QTableWidgetItem(str(row_data[2]) + " " +str(row_data[3])))
+            self.users_details_table.setItem(row_num, 1, QTableWidgetItem(str(row_data[5])))
+            self.users_details_table.setItem(row_num, 2, QTableWidgetItem(str(row_data[1])))
+            self.users_details_table.setItem(row_num, 3, QTableWidgetItem(str(row_data[4])))
+
+        self.db.close()
+
+    def show_products_table_data(self):
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        sql = ''' SELECT * FROM products '''
+        self.cur.execute(sql)
+        data = self.cur.fetchall()
+        self.products_details_table.setRowCount(0)
+        for row_num, row_data in enumerate(data):
+            # print(row_num, "---", row_data)
+            self.products_details_table.insertRow(row_num)
+            # for column_num, data in enumerate(row_data):
+            #     print(column_num, "---", data)
+            self.products_details_table.setItem(row_num, 0, QTableWidgetItem(str(row_data[1])))
+            self.products_details_table.setItem(row_num, 1, QTableWidgetItem(str(row_data[2])))
 
 
+        self.db.close()
+
+    
     def handleUiChanges(self):
         #creating a timer object 
         timer = QTimer(self) 
@@ -67,7 +147,9 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.tabWidget.tabBar().setVisible(False)
         self.staticsTabWidget.tabBar().setVisible(False)
         self.help_tabWidget.tabBar().setVisible(False)
-        self.getUser()
+        self.db_tabWidget.tabBar().setVisible(False)
+        self.settings_tabWidget.tabBar().setVisible(False)
+        # self.getUser()
 
         self.setPassedNumber()
         self.setFailedNumber()
@@ -87,21 +169,281 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.error_list_prev_page.clicked.connect(self.openHelpTab)
         self.error_list_next_page.clicked.connect(self.open_helpTab_color_list)
         self.color_list_prev_page.clicked.connect(self.open_helpTab_error_list)
-
-        ## DB Buttons ##
-        # P
-        self.add_product.clicked.connect(self.Add_Product)
-        self.remover_product.clicked.connect(self.Delete_Product)
-        self.edit_product.clicked.connect(self.Edit_Porduct)
-        
-        # U
-        self.add_user.clicked.connect(self.Add_Product)
-        self.remove_user.clicked.connect(self.Delete_Product)
-        self.edit_user.clicked.connect(self.Edit_Porduct)
+        # open add user page
+        self.add_user.clicked.connect(self.open_add_user_page)
+        # add user 
+        self.add_user_2.clicked.connect(self.add_new_user)
+        # go to user edit page
+        self.edit_user.clicked.connect(self.open_edit_user_page)
+        self.remove_user.clicked.connect(self.open_edit_user_page)
+        # go to product edit page
+        self.edit_product.clicked.connect(self.open_edit_product_page)
+        self.remover_product.clicked.connect(self.open_edit_product_page)
+        # go to curr user edit page
+        self.curr_user_edit_btn.clicked.connect(self.open_curr_edit_user_page)
+        # edit current user data
+        self.edit_user_btn_2.clicked.connect(self.edit_curr_user_data)
+        # edit user data by username
+        self.edit_user_btn.clicked.connect(self.edit_user_data)
+        # login
+        self.login_btn_2.clicked.connect(self.login)
+        # search user
+        self.search_btn.clicked.connect(self.search_user)
+        # delete user
+        self.delete_user_btn.clicked.connect(self.delete_user)
+        # go to add product page
+        self.add_product.clicked.connect(self.open_add_product_page)
+        # add new product
+        self.add_product_2.clicked.connect(self.add_product_func)
+        # search product
+        self.search_btn_2.clicked.connect(self.search_product)
+        # delete product
+        self.delete_product_btn_2.clicked.connect(self.delete_product)
+        # edit product
+        self.edit_product_btn.clicked.connect(self.edit_product_data)
 
         ######################################day Report
         self.searchDate.clicked.connect(self.readFromFile)
     #########################################
+
+
+    def add_product_func(self):
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        product_name = self.product_name.text()
+        product_code = self.product_code.text()
+        self.cur.execute('''
+            INSERT INTO products(product_name, product_code)
+            VALUES (%s, %s)
+        ''', (product_name.encode('utf-8'), product_code.encode('utf-8')))
+        self.db.commit()
+        self.statusBar().showMessage('New Product Added')
+
+        self.show_users_table_data()
+        self.show_products_table_data()
+
+    def search_product(self):
+        product_code = self.lineEdit_3.text()
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='-----', db='---')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        sql = ''' SELECT * FROM products WHERE product_code=%s'''
+        self.cur.execute(sql, [(product_code)])
+        data = self.cur.fetchone()
+        # print(data)
+        self.lineEdit_14.setText(data[1])
+        self.lineEdit_15.setText(data[2])
+
+    def delete_product(self):
+        product_code = self.lineEdit_3.text()
+        self.db = MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        self.cur.execute('''
+            DELETE FROM products WHERE product_code = %s
+        ''', [product_code])
+        self.db.commit()
+        self.statusBar().showMessage('Product Deleted')
+
+        self.show_users_table_data()
+        self.show_products_table_data()
+
+    def edit_product_data(self):
+        original_product_code = self.lineEdit_3.text()
+        product_name = self.lineEdit_14.text()
+        product_code = self.lineEdit_15.text()
+        self.db = MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        self.cur.execute('''
+            UPDATE products SET product_name = %s, product_code = %s WHERE product_code = %s
+        ''', (product_name.encode('utf-8'), product_code.encode('utf-8'), original_product_code))
+
+        self.db.commit()
+        self.statusBar().showMessage('Product Edited')
+
+        self.show_users_table_data()
+        self.show_products_table_data()
+
+
+    def add_new_user(self):
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        username = self.new_user_name.text()
+        password = self.new_user_password.text()
+        fname = self.new_user_fname.text()
+        lname = self.new_user_lname.text()
+        post = self.new_user_post.currentText()
+        self.cur.execute('''
+            INSERT INTO users(user_name, first_name, last_name, user_password, user_post)
+            VALUES (%s, %s, %s, %s, %s)
+        ''', (username.encode('utf-8'), fname.encode('utf-8'), lname.encode('utf-8'), password.encode('utf-8'), post.encode('utf-8')))
+        self.db.commit()
+        self.statusBar().showMessage('New User Added')
+
+        self.show_users_table_data()
+        self.show_products_table_data()
+    
+    def search_user(self):
+        username = self.lineEdit_2.text()
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='-----', db='---')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        sql = ''' SELECT * FROM users WHERE user_name=%s'''
+        self.cur.execute(sql, [(username)])
+        data = self.cur.fetchone()
+        # print(data)
+        self.lineEdit_4.setText(data[1])
+        self.lineEdit_5.setText(data[4])
+        self.lineEdit_6.setText(data[2])
+        self.lineEdit_7.setText(data[3])
+        post = data[5]
+        if post == 'مدیرخط':
+            self.user_post.setCurrentIndex(1)
+        elif post == 'کارگر':
+            self.user_post.setCurrentIndex(0)
+        elif post == 'مدیریت کارخانه':
+            self.user_post.setCurrentIndex(2)
+        self.db.close()
+
+    def delete_user(self):
+        original_user_name = self.lineEdit_2.text()
+        username = self.lineEdit_4.text()
+        password = self.lineEdit_5.text()
+        fname = self.lineEdit_6.text()
+        lname = self.lineEdit_7.text()
+        post = self.user_post.currentText()
+        self.db = MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        self.cur.execute('''
+            DELETE FROM users WHERE user_name = %s
+        ''', [original_user_name])
+        self.db.commit()
+        self.statusBar().showMessage('User Deleted')
+
+        self.show_users_table_data()
+        self.show_products_table_data()
+
+    def edit_user_data(self):
+        original_user_name = self.lineEdit_2.text()
+        username = self.lineEdit_4.text()
+        password = self.lineEdit_5.text()
+        fname = self.lineEdit_6.text()
+        lname = self.lineEdit_7.text()
+        post = self.user_post.currentText()
+        self.db = MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        self.cur.execute('''
+            UPDATE users SET user_name = %s, first_name = %s, last_name = %s, user_password = %s, user_post = %s WHERE user_name = %s
+        ''', (username.encode('utf-8'), fname.encode('utf-8'), lname.encode('utf-8'), password.encode('utf-8'),  post.encode('utf-8'), original_user_name))
+
+        self.db.commit()
+        self.statusBar().showMessage('User Edited')
+
+        self.show_users_table_data()
+        self.show_products_table_data()
+    
+    def login(self):
+        username = self.lineEdit_9.text()
+        password = self.lineEdit_8.text()
+        self.db = MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        sql = ''' SELECT * FROM users '''
+        self.cur.execute(sql)
+        data = self.cur.fetchall()
+        for row in data:
+            if username == row[1] and password == row[4]:
+                self.groupBox_6.setEnabled(True)
+                self.lineEdit_10.setText(row[1])
+                self.lineEdit_11.setText(row[4])
+                self.lineEdit_12.setText(row[2])
+                self.lineEdit_13.setText(row[3])
+
+    def edit_curr_user_data(self):
+        original_user_name = self.lineEdit_9.text()
+        username = self.lineEdit_10.text()
+        password = self.lineEdit_11.text()
+        fname = self.lineEdit_12.text()
+        lname = self.lineEdit_13.text()
+        self.db = MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        self.cur.execute('''
+            UPDATE users SET user_name = %s, first_name = %s, last_name = %s, user_password = %s WHERE user_name = %s
+        ''', (username.encode('utf-8'), fname.encode('utf-8'), lname.encode('utf-8'), password.encode('utf-8'), original_user_name))
+
+        self.db.commit()
+        self.statusBar().showMessage('User Edited')
+
+        self.show_users_table_data()
+        self.show_products_table_data()
+        global first_name
+        global last_name
+        first_name = fname
+        last_name = lname
+        self.getUser()
+
+    def open_add_user_page(self):
+         self.db_tabWidget.setCurrentIndex(1)
+
+    def open_add_product_page(self):
+         self.db_tabWidget.setCurrentIndex(3)
+
+    def open_edit_user_page(self):
+         self.db_tabWidget.setCurrentIndex(2)
+
+    def open_edit_product_page(self):
+         self.db_tabWidget.setCurrentIndex(4)
+
+    def open_curr_edit_user_page(self):
+         self.settings_tabWidget.setCurrentIndex(1)
+
+
     ####################Setting Date and Time#########################
     def dateTime(self):
 
@@ -122,8 +464,12 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
     ########################################
     ##########################Getting User#############################
     def getUser(self):
+        global first_name
+        global last_name
         # Until User database is ready-> Must change
-        self.User.setText('علی علوی')
+
+        self.User.setText(first_name + " " +last_name)
+        # self.User.setText('علی علوی')
     #########################################
     ###################setting pass/fail totals########################
     def setPassedNumber(self):
@@ -145,9 +491,11 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
 
     def openDataBaseTab(self):
         self.tabWidget.setCurrentIndex(2)
+        self.db_tabWidget.setCurrentIndex(0)
 
     def openSettingsTab(self):
         self.tabWidget.setCurrentIndex(3)
+        self.settings_tabWidget.setCurrentIndex(0)
 
     def openHelpTab(self):
         self.tabWidget.setCurrentIndex(4)
@@ -159,8 +507,8 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
     def backToStaticsTab(self):
         self.staticsTabWidget.setCurrentIndex(0)
 
-    def openSettingsTab(self):
-        self.staticsTabWidget.setCurrentIndex(3)
+    # def openSettingsTab(self):
+    #     self.staticsTabWidget.setCurrentIndex(3)
 
     def open_helpTab_error_list(self):
         self.help_tabWidget.setCurrentIndex(1)
@@ -331,62 +679,9 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
 
     #########################################################
 
-    #####################
-    ## DB - Connection ##
-    #####################
-
-    #product
-    def Add_Product(self):
-        self.db = MySQLdb.connect(host='localhost', user='ahb', password='4', db='bmn')
-        self.cur = self.db.cursor()
-
-        code = self.lineEdit_2.text()
-        name = self.lineEdit.text()
-
-        self.cur.execute('''
-            INSERT INTO products (product_name, product_code) VALUES (%s,%s);
-        ''', (name, code,))
-        self.db.commit()
-        self.statusBar().showMessage('محصول جدید اضافه شد.')
-
-
-    def Edit_Porduct(self):
-        pass
-
-
-    def Delete_Product(self):
-        pass
-
-
-    #user
-    def Add_User(self):
-        self.db = MySQLdb.connect(host='localhost', user='ahb', password='4', db='bmn')
-        self.cur = self.db.cursor()
-        
-        fullname = self.lineEdit_3.text()
-        fname = fullname.split(' ')[0];
-        lname = fullname.split(' ')[1:].join(' ')
-        user_name = self.lineEdit_4.text()
-        user_password = self.lineEdit_5.text()
-
-        self.cur.execute('''
-            INSERT INTO users (user_name, first_name, last_name, user_password) VALUES (%s,%s,%s,%s);
-        ''', (user_name, fname, lname, user_password,))
-        self.db.commit()
-        self.statusBar().showMessage('کاربر جدید اضافه شد.')
-
-
-    def Edit_User(self):
-        pass
-
-
-    def Delete_User(self):
-        pass       
-
-
 def main():
     app = QApplication(sys.argv)
-    window = MainApp()
+    window = Login()
     window.show()
     app.exec_()
 

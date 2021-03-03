@@ -1,0 +1,18 @@
+
+
+Date 1399-12-09
+totalPass: 0
+totalFail: 0
+low weight: 15
+over weight: 0
+foreign object: 25
+low level: 5
+
+Date 1399-12-10
+totalPass: 0
+totalFail: 0
+low weight: 15
+over weight: 0
+foreign object: 25
+low level: 5
+
