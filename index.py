@@ -50,6 +50,8 @@ class Login(QWidget, login):
                     self.window2 = MainApp()
                     self.close()
                     self.window2.show()
+            self.label.setText("مشخصات وارد شده موجود نمیباشد")
+            
 
 class MainApp(QMainWindow,QtWidgets.QDialog):
     
