@@ -8,7 +8,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.uic import *
 import pyqtgraph as pg
-from PyQt5.QtChart import QChart, QChartView, QPieSeries, QPieSlice
+from PyQt5.QtChart import QChart, QChartView, QPieSeries, QPieSlice, QBarSet, QBarSeries, QBarCategoryAxis, QValueAxis
 import MySQLdb
 from PyQt5.uic import loadUiType
 import jdatetime
@@ -31,7 +31,7 @@ class Login(QWidget, login):
             global last_name
             username = self.username.text()
             password = self.password.text()
-            self.db = MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+            self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
             self.cur = self.db.cursor()
             self.cur.execute('''SET character_set_results=utf8;''')
             self.cur.execute('''SET character_set_client=utf8;''')
@@ -43,14 +43,12 @@ class Login(QWidget, login):
             data = self.cur.fetchall()
             for row in data:
                 if username == row[1] and password == row[4]:
-                    print('user match')
                     first_name = row[2]
-                    print(type(first_name))
                     last_name = row[3]
                     self.window2 = MainApp()
                     self.close()
                     self.window2.show()
-            self.label.setText("مشخصات وارد شده موجود نمیباشد")
+            self.loginErrorLabel.setText("نام کاربری یا رمز عبور اشتباه است")
             
 
 class MainApp(QMainWindow,QtWidgets.QDialog):
@@ -73,7 +71,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.player = QtMultimedia.QMediaPlayer(None, QtMultimedia.QMediaPlayer.VideoSurface)
         self.tabWidget.setCurrentIndex(0)
         self.help_tabWidget.setCurrentIndex(0)
-        file = os.path.join(os.path.dirname(__file__), "small1.mp4")
+        file = os.path.join(os.path.dirname(__file__), "small.mp4")
         self.player.setMedia(QtMultimedia.QMediaContent(QtCore.QUrl.fromLocalFile(file)))
         self.player.setVideoOutput(self.ui.widget)
         self.player.play()
@@ -91,7 +89,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         ################################
         
     def show_users_table_data(self):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='-----', db='---')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -103,10 +101,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         data = self.cur.fetchall()
         self.users_details_table.setRowCount(0)
         for row_num, row_data in enumerate(data):
-            # print(row_num, "---", row_data)
             self.users_details_table.insertRow(row_num)
-            # for column_num, data in enumerate(row_data):
-            #     print(column_num, "---", data)
             self.users_details_table.setItem(row_num, 0, QTableWidgetItem(str(row_data[2]) + " " +str(row_data[3])))
             self.users_details_table.setItem(row_num, 1, QTableWidgetItem(str(row_data[5])))
             self.users_details_table.setItem(row_num, 2, QTableWidgetItem(str(row_data[1])))
@@ -115,7 +110,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.db.close()
 
     def show_products_table_data(self):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -127,12 +122,9 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         data = self.cur.fetchall()
         self.products_details_table.setRowCount(0)
         for row_num, row_data in enumerate(data):
-            # print(row_num, "---", row_data)
             self.products_details_table.insertRow(row_num)
-            # for column_num, data in enumerate(row_data):
-            #     print(column_num, "---", data)
-            self.products_details_table.setItem(row_num, 0, QTableWidgetItem(str(row_data[1])))
-            self.products_details_table.setItem(row_num, 1, QTableWidgetItem(str(row_data[2])))
+            self.products_details_table.setItem(row_num, 0, QTableWidgetItem(str(row_data[0])))
+            self.products_details_table.setItem(row_num, 1, QTableWidgetItem(str(row_data[1])))
 
 
         self.db.close()
@@ -155,7 +147,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
 
         self.setPassedNumber()
         self.setFailedNumber()
-
+        self.showProductComboBox()
         self.setStatus()
 
     def handleButtons(self):
@@ -164,8 +156,10 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.databaseButton.clicked.connect(self.openDataBaseTab)
         self.settingsButton.clicked.connect(self.openSettingsTab)
         self.helpButton.clicked.connect(self.openHelpTab)
-        self.dayReport.clicked.connect(self.openDayReport)
-        self.backToStatic.clicked.connect(self.backToStaticsTab)
+        self.erProductReporrt.clicked.connect(self.openERProductReport)#
+        self.erDateReport.clicked.connect(self.openERDateReport)#
+        self.backToStatic_1.clicked.connect(self.backToStaticsTab)#
+        self.backToStatic_2.clicked.connect(self.backToStaticsTab)#
         self.help_error_list.clicked.connect(self.open_helpTab_error_list)
         self.help_color_list.clicked.connect(self.open_helpTab_color_list)
         self.error_list_prev_page.clicked.connect(self.openHelpTab)
@@ -205,12 +199,13 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.edit_product_btn.clicked.connect(self.edit_product_data)
 
         ######################################day Report
-        self.searchDate.clicked.connect(self.readFromFile)
+        self.searchERDate.clicked.connect(self.retERDate)
+        self.searchERProduct.clicked.connect(self.retERProduct)
     #########################################
 
 
     def add_product_func(self):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -231,7 +226,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
 
     def search_product(self):
         product_code = self.lineEdit_3.text()
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='-----', db='---')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -247,7 +242,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
 
     def delete_product(self):
         product_code = self.lineEdit_3.text()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -267,7 +262,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         original_product_code = self.lineEdit_3.text()
         product_name = self.lineEdit_14.text()
         product_code = self.lineEdit_15.text()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -286,7 +281,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
 
 
     def add_new_user(self):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -310,7 +305,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
     
     def search_user(self):
         username = self.lineEdit_2.text()
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='-----', db='---')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -341,7 +336,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         fname = self.lineEdit_6.text()
         lname = self.lineEdit_7.text()
         post = self.user_post.currentText()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -364,7 +359,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         fname = self.lineEdit_6.text()
         lname = self.lineEdit_7.text()
         post = self.user_post.currentText()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -384,7 +379,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
     def login(self):
         username = self.lineEdit_9.text()
         password = self.lineEdit_8.text()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -408,7 +403,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         password = self.lineEdit_11.text()
         fname = self.lineEdit_12.text()
         lname = self.lineEdit_13.text()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='----', db='---')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -460,18 +455,12 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.Date.setText('%s/%s/%s' % (year , month, day))
         self.Time.setText('%s:%s:%s' % (dateAndTime.hour , dateAndTime.minute, dateAndTime.second))
 
-        if (dateAndTime.hour==8  and dateAndTime.minute==27 and dateAndTime.second==5): 
-            self.saveToFile()
-
     ########################################
     ##########################Getting User#############################
     def getUser(self):
         global first_name
         global last_name
-        # Until User database is ready-> Must change
-
         self.User.setText(first_name + " " +last_name)
-        # self.User.setText('علی علوی')
     #########################################
     ###################setting pass/fail totals########################
     def setPassedNumber(self):
@@ -503,8 +492,11 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.tabWidget.setCurrentIndex(4)
         self.help_tabWidget.setCurrentIndex(0)
 
-    def openDayReport(self):
+    def openERDateReport(self):
         self.staticsTabWidget.setCurrentIndex(1)
+    
+    def openERProductReport(self):
+        self.staticsTabWidget.setCurrentIndex(2)
 
     def backToStaticsTab(self):
         self.staticsTabWidget.setCurrentIndex(0)
@@ -554,14 +546,24 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
 
     def setPassFailStat(self):
         # To be fixed
-        errorCode = 'Low weight'
+        errorType = 'low weight'
         status = 0
         if status:
             self.passFail.setText('Pass')
             self.passFail.setStyleSheet("background-color:rgb(85, 255, 127)")
         else:
+            ##change if possible-> make function
+            dateAndTime = datetime.datetime.now()
+            date = jdatetime.date.today() 
+
+            year = date.strftime('%Y')
+            month = date.strftime('%m')
+            day = date.strftime('%d')
+            ttoday = day + "/" + month + "/" + year
+            ttime = str(dateAndTime.hour) +":"+ str(dateAndTime.minute) +":"+ str(dateAndTime.second)
+            self.saveErDb(ttoday, ttime, errorType)
             self.passFail.setText('Fail')
-            self.failCode.setText(errorCode)
+            self.failCode.setText(errorType)
             self.passFail.setStyleSheet("background-color:rgb(255,37,95)")
 
     ######################################
@@ -590,96 +592,281 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         chart = QChart()
         chart.addSeries(series)
         chart.setAnimationOptions(QChart.SeriesAnimations)
-        chart.setTitle("Pie Chart Example")
+        chart.setTitle("Pass/Fail Pie Chart")
         self.pieChart = QChartView(chart)
         self.pieChart.setRenderHint(QPainter.Antialiasing)
         self.pieChartLayout.addWidget(self.pieChart)
-    #####################################
+    ##########################################33
+    ################Save Error to DataBase##########################
 
-    def saveToFile(self):
-        
-        error = {}
-        date = {}
+    def saveErDb(self, date, time, error):
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        product_type = self.productType.text()
+        sql = ''' SELECT product_code FROM products WHERE product_name=%s'''
+        self.cur.execute(sql, [(product_type.encode(('utf-8')))])
+        prod_code = self.cur.fetchone()[0]
+        self.cur.execute('''
+            INSERT INTO errors(product_type, prod_code, error, error_date, error_time)
+            VALUES (%s, %s, %s, %s, %s)
+        ''', (product_type.encode('utf-8'), prod_code, error.encode('utf-8'), date.encode('utf-8'), time.encode('utf-8')))
+        self.db.commit()
 
-        today = jdatetime.date.today()
-        year = today.strftime('%Y')
-        month = today.strftime('%m')
-        day = today.strftime('%d')
+    #########################################################retrive errors ################################
 
-        ttoday = "Date "+year + "-" + month + "-" + day
-        error = {'totalPass':self.totalPass,'totalFail':self.totalFail,'low weight':self.low_weight, 'over weight':self.over_weight, 'foreign object':self.foreign_object, 'low level':self.low_level}
-        date[ttoday] = error
+    def retERProduct(self):
 
+        productType=self.productComboBox.currentText()
 
-        with open("test2.txt", "a") as f:
-            for key, nested in date.items():
-                print(key, file=f)
-                for subkey, value in nested.items():
-                    print('{}: {}'.format(subkey, value), file=f)
-                print(file=f)
+        #username = self.lineEdit_2.text()
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        sql = ''' SELECT * FROM errors WHERE product_type=%s'''
+        self.cur.execute(sql, [(productType.encode(('utf-8')))])
+        data = self.cur.fetchall()
+        if not(data) :
+            self.errorMessage_2.setText("اطلاعاتی برای این محصول وجود ندارد")
+        else:
+            self.errorMessage.clear()
+        self.productERTable.setRowCount(0)
+        for row_num, row_data in enumerate(data):
+            # print(row_num, "---", row_data)
+            self.productERTable.insertRow(row_num)
+            # for column_num, data in enumerate(row_data):
+            #     print(column_num, "---", data)
+            self.productERTable.setItem(row_num, 0, QTableWidgetItem(str(row_data[2])))
+            self.productERTable.setItem(row_num, 1, QTableWidgetItem(str(row_data[3])))
+            self.productERTable.setItem(row_num, 2, QTableWidgetItem(str(row_data[4])))
+            self.productERTable.setItem(row_num, 3, QTableWidgetItem(str(row_data[5])))
 
-
-    ###############Read from file
-    def readFromFile(self):
-        d = {}
-        k = ''
-        for line in open('test2.txt'):
-            if ':' in line:
-                key, value = line.split(':', 1)
-                d[k][key] = value.strip()
-            else:
-                k = line.strip()
-                d[k] = {}
-
+        self.db.close()
+    ######################## Return errors based on date #############
+    def retERDate(self):
         day=self.dayComboBox.currentText()
         month=self.monthComboBox.currentText()
         year=self.yearComboBox.currentText()
-        date="Date "+year+"-"+month+"-"+day
-        
-        k1 = date
+        date=day + "/" + month + "/" + year
 
         try:
-            self.errorMessage.clear()
-            #for total pass
-            k2 = 'totalPass'
-            TP = d[k1][k2]
-            self.Pass.setText(TP)
+            self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+            self.cur = self.db.cursor()
+            self.cur.execute('''SET character_set_results=utf8;''')
+            self.cur.execute('''SET character_set_client=utf8;''')
+            self.cur.execute('''SET character_set_connection=utf8;''')
+            self.cur.execute('''SET character_set_database=utf8;''')
+            self.cur.execute('''SET character_set_server=utf8;''')
+            sql = ''' SELECT * FROM errors WHERE error_date=%s'''
+            self.cur.execute(sql, [(date.encode(('utf-8')))])
+            data = self.cur.fetchall()
+            if not(data) :
+                self.errorMessage.setText("اطلاعاتی برای این تاریخ وجود ندارد")
+            else:
+                self.errorMessage.clear()
 
-            #for total fail
-            k2 = 'totalFail'
-            TF = d[k1][k2]
-            self.Fail.setText(TF)
 
-            #for low weight
-            k2 = 'low weight'
-            LW = d[k1][k2]
-            self.lowWeight.setText(LW)
+            self.dateERTable.setRowCount(0)
+            for row_num, row_data in enumerate(data):
+                self.dateERTable.insertRow(row_num)
+                self.dateERTable.setItem(row_num, 0, QTableWidgetItem(str(row_data[1])))
+                self.dateERTable.setItem(row_num, 1, QTableWidgetItem(str(row_data[2])))
+                self.dateERTable.setItem(row_num, 2, QTableWidgetItem(str(row_data[3])))
+                self.dateERTable.setItem(row_num, 3, QTableWidgetItem(str(row_data[5])))
 
-            #for over weight
-            k2 = 'over weight'
-            OV = d[k1][k2]
-            self.overWeight.setText(OV)
+            self.db.close()
+            self.barGraph(date, data)
+            
+                #self.errorMessage.setText("اطلاعاتی برای این تاریخ وجود ندارد")
+        
+        except: #change
+            pass
 
-            #for foreign object
-            k2 = 'foreign object'
-            FO = d[k1][k2]
-            self.foreignObject.setText(FO)
 
-            #for low level
-            k2 = 'low level'
-            LL = d[k1][k2]
-            self.lowLevel.setText(LL)
+           
+    ############ Draw Error BarGraph for the date###########
+    def barGraph(self, date, data):
+        try:##chnage if possible-> make one function
+            self.barGraphLayout.itemAt(0).widget().deleteLater()
+            self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+            self.cur = self.db.cursor()
+            self.cur.execute('''SET character_set_results=utf8;''')
+            self.cur.execute('''SET character_set_client=utf8;''')
+            self.cur.execute('''SET character_set_connection=utf8;''')
+            self.cur.execute('''SET character_set_database=utf8;''')
+            self.cur.execute('''SET character_set_server=utf8;''')
+            ###get data
+            error = "low weight"
+            self.cur.execute(''' SELECT COUNT(iderrors) FROM errors WHERE error_date=%s AND error=%s''', 
+            (date.encode(('utf-8')), error.encode(('utf-8'))))
+            LW = self.cur.fetchone()[0]
+            #print(LW)
+            #
+            error = "high weight"
+            self.cur.execute(''' SELECT COUNT(iderrors) FROM errors WHERE error_date=%s AND error=%s''', 
+            (date.encode(('utf-8')), error.encode(('utf-8'))))
+            HW = self.cur.fetchone()[0]
+            #print(HW)
+            #
+            error = "low level"
+            self.cur.execute(''' SELECT COUNT(iderrors) FROM errors WHERE error_date=%s AND error=%s''', 
+            (date.encode(('utf-8')), error.encode(('utf-8'))))
+            LL = self.cur.fetchone()[0]
+            #print(LL)
+            #
+            error = "high level"
+            self.cur.execute(''' SELECT COUNT(iderrors) FROM errors WHERE error_date=%s AND error=%s''', 
+            (date.encode(('utf-8')), error.encode(('utf-8'))))
+            HL = self.cur.fetchone()[0]
+            #print(HL)
+            #
+            error = "foreign object"
+            self.cur.execute(''' SELECT COUNT(iderrors) FROM errors WHERE error_date=%s AND error=%s''', 
+            (date.encode(('utf-8')), error.encode(('utf-8'))))
+            FO = self.cur.fetchone()[0]
+            #print(FO)
+            ###draw the graph
+            set0 = QBarSet("LW")
+            set0 << LW
+            set1 = QBarSet("HW")
+            set1 << HW
+            set2 = QBarSet("LL")
+            set2 << LL
+            set3 = QBarSet("HL")
+            set3 << HL
+            set4 = QBarSet("FO")
+            set4 << FO
 
+            series = QBarSeries()
+            series.append(set0)
+            series.append(set1)
+            series.append(set2)
+            series.append(set3)
+            series.append(set4)
+    
+            chart = QChart()
+            chart.addSeries(series)
+            chart.setTitle("جمع انواع خطاها")
+            chart.setAnimationOptions(QChart.SeriesAnimations)
+
+            axisX = QBarCategoryAxis();
+            axisX.append("date");
+            chart.addAxis(axisX, Qt.AlignBottom);
+            series.attachAxis(axisX);
+
+            axisY = QValueAxis();
+            axisY.applyNiceNumbers()
+            chart.addAxis(axisY,Qt.AlignLeft);
+            series.attachAxis(axisY);
+
+            chart.legend().setVisible(True)
+            chart.legend().setAlignment(Qt.AlignBottom)
+
+            chartView = QChartView(chart)
+            chartView.setRenderHint(QPainter.Antialiasing)
+            self.barGraphLayout.addWidget(chartView)
         except:
-            self.errorMessage.setText("اطلاعاتی برای این تاریخ وجود ندارد")
-            self.Pass.clear()
-            self.Fail.clear()
-            self.lowWeight.clear()
-            self.overWeight.clear()
-            self.foreignObject.clear()
-            self.lowLevel.clear()
+            self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+            self.cur = self.db.cursor()
+            self.cur.execute('''SET character_set_results=utf8;''')
+            self.cur.execute('''SET character_set_client=utf8;''')
+            self.cur.execute('''SET character_set_connection=utf8;''')
+            self.cur.execute('''SET character_set_database=utf8;''')
+            self.cur.execute('''SET character_set_server=utf8;''')
+            ###get data
+            error = "low weight"
+            self.cur.execute(''' SELECT COUNT(iderrors) FROM errors WHERE error_date=%s AND error=%s''', 
+            (date.encode(('utf-8')), error.encode(('utf-8'))))
+            LW = self.cur.fetchone()[0]
+            #print(LW)
+            #
+            error = "high weight"
+            self.cur.execute(''' SELECT COUNT(iderrors) FROM errors WHERE error_date=%s AND error=%s''', 
+            (date.encode(('utf-8')), error.encode(('utf-8'))))
+            HW = self.cur.fetchone()[0]
+            #print(HW)
+            #
+            error = "low level"
+            self.cur.execute(''' SELECT COUNT(iderrors) FROM errors WHERE error_date=%s AND error=%s''', 
+            (date.encode(('utf-8')), error.encode(('utf-8'))))
+            LL = self.cur.fetchone()[0]
+            #print(LL)
+            #
+            error = "high level"
+            self.cur.execute(''' SELECT COUNT(iderrors) FROM errors WHERE error_date=%s AND error=%s''', 
+            (date.encode(('utf-8')), error.encode(('utf-8'))))
+            HL = self.cur.fetchone()[0]
+            #print(HL)
+            #
+            error = "foreign object"
+            self.cur.execute(''' SELECT COUNT(iderrors) FROM errors WHERE error_date=%s AND error=%s''', 
+            (date.encode(('utf-8')), error.encode(('utf-8'))))
+            FO = self.cur.fetchone()[0]
+            #print(FO)
+            ###draw the graph
+            set0 = QBarSet("LW")
+            set0 << LW
+            set1 = QBarSet("HW")
+            set1 << HW
+            set2 = QBarSet("LL")
+            set2 << LL
+            set3 = QBarSet("HL")
+            set3 << HL
+            set4 = QBarSet("FO")
+            set4 << FO
 
-    #########################################################
+            series = QBarSeries()
+            series.append(set0)
+            series.append(set1)
+            series.append(set2)
+            series.append(set3)
+            series.append(set4)
+    
+            chart = QChart()
+            chart.addSeries(series)
+            chart.setTitle("جمع انواع خطاها")
+            chart.setAnimationOptions(QChart.SeriesAnimations)
+
+            axisX = QBarCategoryAxis();
+            axisX.append("date");
+            chart.addAxis(axisX, Qt.AlignBottom);
+            series.attachAxis(axisX);
+
+            axisY = QValueAxis();
+            axisY.applyNiceNumbers()
+            chart.addAxis(axisY,Qt.AlignLeft);
+            series.attachAxis(axisY);
+
+            chart.legend().setVisible(True)
+            chart.legend().setAlignment(Qt.AlignBottom)
+
+            chartView = QChartView(chart)
+            chartView.setRenderHint(QPainter.Antialiasing)
+            self.barGraphLayout.addWidget(chartView)
+
+    ####################################
+    ######################Adjust ComboBoxes###################
+    def showProductComboBox(self):
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.cur = self.db.cursor()
+        self.cur.execute('''SET character_set_results=utf8;''')
+        self.cur.execute('''SET character_set_client=utf8;''')
+        self.cur.execute('''SET character_set_connection=utf8;''')
+        self.cur.execute('''SET character_set_database=utf8;''')
+        self.cur.execute('''SET character_set_server=utf8;''')
+        self.cur.execute(''' SELECT product_name FROM products ''')
+        data = self.cur.fetchall()
+
+        for product in data:
+            self.productComboBox.addItem(product[0])
 
 def main():
     app = QApplication(sys.argv)
