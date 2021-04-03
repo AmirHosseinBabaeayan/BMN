@@ -31,7 +31,7 @@ class Login(QWidget, login):
             global last_name
             username = self.username.text()
             password = self.password.text()
-            self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+            self.db = MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
             self.cur = self.db.cursor()
             self.cur.execute('''SET character_set_results=utf8;''')
             self.cur.execute('''SET character_set_client=utf8;''')
@@ -89,7 +89,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         ################################
         
     def show_users_table_data(self):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -110,7 +110,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.db.close()
 
     def show_products_table_data(self):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -153,7 +153,12 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
     def handleButtons(self):
         self.homeButton.clicked.connect(self.openHomeTab)
         self.staticsButton.clicked.connect(self.openStaticsTab)
+        # Go to Database Page
         self.databaseButton.clicked.connect(self.openDataBaseTab)
+        self.prev_page_btn.clicked.connect(self.openDataBaseTab)
+        self.prev_page_btn_2.clicked.connect(self.openDataBaseTab)
+        self.prev_page_btn_3.clicked.connect(self.openDataBaseTab)
+        self.prev_page_btn_4.clicked.connect(self.openDataBaseTab)
         self.settingsButton.clicked.connect(self.openSettingsTab)
         self.helpButton.clicked.connect(self.openHelpTab)
         self.erProductReporrt.clicked.connect(self.openERProductReport)#
@@ -205,7 +210,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
 
 
     def add_product_func(self):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -214,19 +219,22 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.cur.execute('''SET character_set_server=utf8;''')
         product_name = self.product_name.text()
         product_code = self.product_code.text()
-        self.cur.execute('''
-            INSERT INTO products(product_name, product_code)
-            VALUES (%s, %s)
-        ''', (product_name.encode('utf-8'), product_code.encode('utf-8')))
-        self.db.commit()
-        self.statusBar().showMessage('New Product Added')
-
+        if (product_name != '') or (product_code != ''):
+            self.cur.execute('''
+                INSERT INTO products(product_name, product_code)
+                VALUES (%s, %s)
+            ''', (product_name.encode('utf-8'), product_code.encode('utf-8')))
+            self.db.commit()
+            self.statusBar().showMessage('New Product Added')
+            self.db.close()
+        else:
+            print('ERROR. --> Fill out the form first!')
         self.show_users_table_data()
         self.show_products_table_data()
 
     def search_product(self):
         product_code = self.lineEdit_3.text()
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -237,23 +245,27 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.cur.execute(sql, [(product_code)])
         data = self.cur.fetchone()
         # print(data)
-        self.lineEdit_14.setText(data[1])
-        self.lineEdit_15.setText(data[2])
+        self.lineEdit_14.setText(data[0])
+        self.lineEdit_15.setText(data[1])
 
     def delete_product(self):
         product_code = self.lineEdit_3.text()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
         self.cur.execute('''SET character_set_connection=utf8;''')
         self.cur.execute('''SET character_set_database=utf8;''')
         self.cur.execute('''SET character_set_server=utf8;''')
-        self.cur.execute('''
-            DELETE FROM products WHERE product_code = %s
-        ''', [product_code])
-        self.db.commit()
-        self.statusBar().showMessage('Product Deleted')
+        if product_code != '':
+            self.cur.execute('''
+                DELETE FROM products WHERE product_code = %s
+            ''', [product_code])
+            self.db.commit()
+            self.statusBar().showMessage('Product Deleted')
+            self.db.close()
+        else:
+            print('ERROR. --> Fill out the form first!')
 
         self.show_users_table_data()
         self.show_products_table_data()
@@ -262,26 +274,30 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         original_product_code = self.lineEdit_3.text()
         product_name = self.lineEdit_14.text()
         product_code = self.lineEdit_15.text()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
         self.cur.execute('''SET character_set_connection=utf8;''')
         self.cur.execute('''SET character_set_database=utf8;''')
         self.cur.execute('''SET character_set_server=utf8;''')
-        self.cur.execute('''
-            UPDATE products SET product_name = %s, product_code = %s WHERE product_code = %s
-        ''', (product_name.encode('utf-8'), product_code.encode('utf-8'), original_product_code))
+        if (product_name != '') or (product_code != ''):
+            self.cur.execute('''
+                UPDATE products SET product_name = %s, product_code = %s WHERE product_code = %s
+            ''', (product_name.encode('utf-8'), product_code.encode('utf-8'), original_product_code))
 
-        self.db.commit()
-        self.statusBar().showMessage('Product Edited')
-
+            self.db.commit()
+            self.statusBar().showMessage('Product Edited')
+        else:
+            print("Error! --> Fields are empty!")
+        self.lineEdit_14.clear()
+        self.lineEdit_15.clear()
         self.show_users_table_data()
         self.show_products_table_data()
 
 
     def add_new_user(self):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -293,19 +309,22 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         fname = self.new_user_fname.text()
         lname = self.new_user_lname.text()
         post = self.new_user_post.currentText()
-        self.cur.execute('''
-            INSERT INTO users(user_name, first_name, last_name, user_password, user_post)
-            VALUES (%s, %s, %s, %s, %s)
-        ''', (username.encode('utf-8'), fname.encode('utf-8'), lname.encode('utf-8'), password.encode('utf-8'), post.encode('utf-8')))
-        self.db.commit()
-        self.statusBar().showMessage('New User Added')
-
+        if (username != '') or (password != '') or (fname != '') or (lname != ''):
+            self.cur.execute('''
+                INSERT INTO users(user_name, first_name, last_name, user_password, user_post)
+                VALUES (%s, %s, %s, %s, %s)
+            ''', (username.encode('utf-8'), fname.encode('utf-8'), lname.encode('utf-8'), password.encode('utf-8'), post.encode('utf-8')))
+            self.db.commit()
+            self.statusBar().showMessage('New User Added')
+            self.db.close()
+        else:
+            print('ERROR. --> Fill out the form first')
         self.show_users_table_data()
         self.show_products_table_data()
     
     def search_user(self):
         username = self.lineEdit_2.text()
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -336,21 +355,29 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         fname = self.lineEdit_6.text()
         lname = self.lineEdit_7.text()
         post = self.user_post.currentText()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
         self.cur.execute('''SET character_set_connection=utf8;''')
         self.cur.execute('''SET character_set_database=utf8;''')
         self.cur.execute('''SET character_set_server=utf8;''')
-        self.cur.execute('''
-            DELETE FROM users WHERE user_name = %s
-        ''', [original_user_name])
-        self.db.commit()
-        self.statusBar().showMessage('User Deleted')
+        if (username != '') or (password != '') or (fname != '') or (lname != ''):
+            self.cur.execute('''
+                DELETE FROM users WHERE user_name = %s
+            ''', [original_user_name])
+            self.db.commit()
+            self.statusBar().showMessage('User Deleted')
+            self.db.close()
+        else:
+            print('ERROR. --> Fill out the form first!')
 
         self.show_users_table_data()
         self.show_products_table_data()
+        self.lineEdit_4.clear()
+        self.lineEdit_5.clear()
+        self.lineEdit_6.clear()
+        self.lineEdit_7.clear()
 
     def edit_user_data(self):
         original_user_name = self.lineEdit_2.text()
@@ -359,27 +386,39 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         fname = self.lineEdit_6.text()
         lname = self.lineEdit_7.text()
         post = self.user_post.currentText()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
         self.cur.execute('''SET character_set_connection=utf8;''')
         self.cur.execute('''SET character_set_database=utf8;''')
         self.cur.execute('''SET character_set_server=utf8;''')
-        self.cur.execute('''
-            UPDATE users SET user_name = %s, first_name = %s, last_name = %s, user_password = %s, user_post = %s WHERE user_name = %s
-        ''', (username.encode('utf-8'), fname.encode('utf-8'), lname.encode('utf-8'), password.encode('utf-8'),  post.encode('utf-8'), original_user_name))
+        if (username != '') or (password != '') or (fname != '') or (lname != ''):
+            self.cur.execute('''
+                UPDATE users SET user_name = %s, first_name = %s, last_name = %s, user_password = %s, user_post = %s WHERE user_name = %s
+            ''', (username.encode('utf-8'), fname.encode('utf-8'), lname.encode('utf-8'), password.encode('utf-8'),  post.encode('utf-8'), original_user_name))
 
-        self.db.commit()
-        self.statusBar().showMessage('User Edited')
-
+            self.db.commit()
+            self.statusBar().showMessage('User Edited')
+            self.db.close()
+        else:
+            print('ERROR. --> Fill out the form first!')
+        global first_name
+        global last_name
+        first_name = fname
+        last_name = lname
+        self.getUser()
         self.show_users_table_data()
         self.show_products_table_data()
+        self.lineEdit_4.clear()
+        self.lineEdit_5.clear()
+        self.lineEdit_6.clear()
+        self.lineEdit_7.clear()
     
     def login(self):
         username = self.lineEdit_9.text()
         password = self.lineEdit_8.text()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -403,7 +442,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         password = self.lineEdit_11.text()
         fname = self.lineEdit_12.text()
         lname = self.lineEdit_13.text()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -427,16 +466,31 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
 
     def open_add_user_page(self):
          self.db_tabWidget.setCurrentIndex(1)
+         self.new_user_fname.clear()
+         self.new_user_lname.clear()
+         self.new_user_name.clear()
+         self.new_user_password.clear()
 
     def open_add_product_page(self):
          self.db_tabWidget.setCurrentIndex(3)
+         self.product_name.clear()
+         self.product_code.clear()
 
     def open_edit_user_page(self):
          self.db_tabWidget.setCurrentIndex(2)
+         self.lineEdit_2.clear()
+         self.lineEdit_4.clear()
+         self.lineEdit_5.clear()
+         self.lineEdit_6.clear()
+         self.lineEdit_7.clear()
 
     def open_edit_product_page(self):
          self.db_tabWidget.setCurrentIndex(4)
+         self.lineEdit_3.clear()
+         self.lineEdit_14.clear()
+         self.lineEdit_15.clear()
 
+        
     def open_curr_edit_user_page(self):
          self.settings_tabWidget.setCurrentIndex(1)
 
@@ -600,7 +654,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
     ################Save Error to DataBase##########################
 
     def saveErDb(self, date, time, error):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -624,7 +678,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         productType=self.productComboBox.currentText()
 
         #username = self.lineEdit_2.text()
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -658,7 +712,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         date=day + "/" + month + "/" + year
 
         try:
-            self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+            self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
             self.cur = self.db.cursor()
             self.cur.execute('''SET character_set_results=utf8;''')
             self.cur.execute('''SET character_set_client=utf8;''')
@@ -696,7 +750,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
     def barGraph(self, date, data):
         try:##chnage if possible-> make one function
             self.barGraphLayout.itemAt(0).widget().deleteLater()
-            self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+            self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
             self.cur = self.db.cursor()
             self.cur.execute('''SET character_set_results=utf8;''')
             self.cur.execute('''SET character_set_client=utf8;''')
@@ -774,7 +828,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
             chartView.setRenderHint(QPainter.Antialiasing)
             self.barGraphLayout.addWidget(chartView)
         except:
-            self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+            self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
             self.cur = self.db.cursor()
             self.cur.execute('''SET character_set_results=utf8;''')
             self.cur.execute('''SET character_set_client=utf8;''')
@@ -855,7 +909,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
     ####################################
     ######################Adjust ComboBoxes###################
     def showProductComboBox(self):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
