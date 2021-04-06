@@ -87,7 +87,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.show_users_table_data()
         self.show_products_table_data()
         ################################
-        
+
     def show_users_table_data(self):
         self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
@@ -202,13 +202,16 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.delete_product_btn_2.clicked.connect(self.delete_product)
         # edit product
         self.edit_product_btn.clicked.connect(self.edit_product_data)
-
+        # Change product type from settings
+        self.confirm_product_type_btn.clicked.connect(self.change_product_type)
         ######################################day Report
         self.searchERDate.clicked.connect(self.retERDate)
         self.searchERProduct.clicked.connect(self.retERProduct)
     #########################################
 
-
+    def change_product_type(self):
+        self.productType.setText(self.productComboBox_2.currentText())
+        
     def add_product_func(self):
         self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
@@ -231,6 +234,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
             print('ERROR. --> Fill out the form first!')
         self.show_users_table_data()
         self.show_products_table_data()
+        self.showProductComboBox()
 
     def search_product(self):
         product_code = self.lineEdit_3.text()
@@ -269,6 +273,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
 
         self.show_users_table_data()
         self.show_products_table_data()
+        self.showProductComboBox()
 
     def edit_product_data(self):
         original_product_code = self.lineEdit_3.text()
@@ -294,6 +299,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.lineEdit_15.clear()
         self.show_users_table_data()
         self.show_products_table_data()
+        self.showProductComboBox()
 
 
     def add_new_user(self):
@@ -909,6 +915,9 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
     ####################################
     ######################Adjust ComboBoxes###################
     def showProductComboBox(self):
+        self.productComboBox.clear()
+        self.productComboBox_2.clear()
+        
         self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
@@ -921,6 +930,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
 
         for product in data:
             self.productComboBox.addItem(product[0])
+            self.productComboBox_2.addItem(product[0])
 
 def main():
     app = QApplication(sys.argv)

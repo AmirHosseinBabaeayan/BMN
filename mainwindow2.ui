@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1120</width>
-    <height>652</height>
+    <height>667</height>
    </rect>
   </property>
   <property name="palette">
@@ -172,7 +172,7 @@
       <x>130</x>
       <y>70</y>
       <width>941</width>
-      <height>521</height>
+      <height>541</height>
      </rect>
     </property>
     <property name="layoutDirection">
@@ -182,7 +182,7 @@
      <string notr="true"/>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -912,7 +912,7 @@ background-color: rgb(85, 255, 127);</string>
        </rect>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab_6">
        <attribute name="title">
@@ -3099,7 +3099,7 @@ border-color: rgb(0, 0, 0);
        </rect>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_14">
        <attribute name="title">
@@ -3146,6 +3146,63 @@ border-color: rgb(0, 0, 0);
         </property>
         <property name="text">
          <string>ویرایش کاربر</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_28">
+        <property name="geometry">
+         <rect>
+          <x>730</x>
+          <y>80</y>
+          <width>191</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Vazir</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::RightToLeft</enum>
+        </property>
+        <property name="text">
+         <string>انتخاب نوع محصول تولیدی:</string>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="productComboBox_2">
+        <property name="geometry">
+         <rect>
+          <x>620</x>
+          <y>80</y>
+          <width>101</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::RightToLeft</enum>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font: 14pt &quot;B Mitra&quot;;</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="confirm_product_type_btn">
+        <property name="geometry">
+         <rect>
+          <x>510</x>
+          <y>80</y>
+          <width>93</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Vazir</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>تایید</string>
         </property>
        </widget>
       </widget>
