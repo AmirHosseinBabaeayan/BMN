@@ -16,10 +16,16 @@ import datetime
 
 # from icons import icons_rc
 
+stat = -1  # 0 : R , 1 : M , 2 : K
+stat_R = 'مدیریت کارخانه'
+stat_M = 'مدیرخط'
+stat_K = 'کارگر'
+
 # ui,_ = loadUiType('mainwindow2.ui')
 login, _ = loadUiType('login.ui')
 first_name = bytes()
 last_name = bytes()
+username_user = ''
 class Login(QWidget, login):
     def __init__(self):
         QWidget.__init__(self)
@@ -43,8 +49,15 @@ class Login(QWidget, login):
             data = self.cur.fetchall()
             for row in data:
                 if username == row[1] and password == row[4]:
+                    username_user = row[1]
                     first_name = row[2]
                     last_name = row[3]
+                    if row[5] == stat_K:
+                        stat = 2
+                    elif row[5] == stat_M:
+                        stat = 1
+                    else:
+                        stat = 0
                     self.window2 = MainApp()
                     self.close()
                     self.window2.show()
@@ -151,6 +164,10 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.setStatus()
 
     def handleButtons(self):
+        if stat == 1 or stat == 2:
+            if stat == 2:
+                self.settingsButton.setEnabled(False)
+            self.databaseButton.setEnablrd(False)
         self.homeButton.clicked.connect(self.openHomeTab)
         self.staticsButton.clicked.connect(self.openStaticsTab)
         # Go to Database Page
@@ -369,13 +386,15 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.cur.execute('''SET character_set_connection=utf8;''')
         self.cur.execute('''SET character_set_database=utf8;''')
         self.cur.execute('''SET character_set_server=utf8;''')
-        if (username != '') or (password != '') or (fname != '') or (lname != ''):
+        if (username != '') or (password != '') or (fname != '') or (lname != '') or (username_user != original_user_name):
             self.cur.execute('''
                 DELETE FROM users WHERE user_name = %s
             ''', [original_user_name])
             self.db.commit()
             self.statusBar().showMessage('User Deleted')
             self.db.close()
+        elif username_user == original_user_name:
+            print('ERROR. --> Access Denied!')
         else:
             print('ERROR. --> Fill out the form first!')
 
