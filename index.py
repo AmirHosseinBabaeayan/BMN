@@ -3,9 +3,12 @@ from __future__ import print_function
 import sys
 import os
 from PyQt5 import QtWidgets, QtMultimedia, uic, QtCore, QtChart
+from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt5.QtPrintSupport import *
+from PyQt5.QtMultimedia import *
+from PyQt5.QtMultimediaWidgets import *
 from PyQt5.uic import *
 import pyqtgraph as pg
 from PyQt5.QtChart import QChart, QChartView, QPieSeries, QPieSlice, QBarSet, QBarSeries, QBarCategoryAxis, QValueAxis
@@ -13,19 +16,14 @@ import MySQLdb
 from PyQt5.uic import loadUiType
 import jdatetime
 import datetime
+import cv2
 
 # from icons import icons_rc
-
-stat = -1  # 0 : R , 1 : M , 2 : K
-stat_R = 'مدیریت کارخانه'
-stat_M = 'مدیرخط'
-stat_K = 'کارگر'
 
 # ui,_ = loadUiType('mainwindow2.ui')
 login, _ = loadUiType('login.ui')
 first_name = bytes()
 last_name = bytes()
-username_user = ''
 class Login(QWidget, login):
     def __init__(self):
         QWidget.__init__(self)
@@ -37,7 +35,7 @@ class Login(QWidget, login):
             global last_name
             username = self.username.text()
             password = self.password.text()
-            self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+            self.db = MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
             self.cur = self.db.cursor()
             self.cur.execute('''SET character_set_results=utf8;''')
             self.cur.execute('''SET character_set_client=utf8;''')
@@ -49,15 +47,8 @@ class Login(QWidget, login):
             data = self.cur.fetchall()
             for row in data:
                 if username == row[1] and password == row[4]:
-                    username_user = row[1]
                     first_name = row[2]
                     last_name = row[3]
-                    if row[5] == stat_K:
-                        stat = 2
-                    elif row[5] == stat_M:
-                        stat = 1
-                    else:
-                        stat = 0
                     self.window2 = MainApp()
                     self.close()
                     self.window2.show()
@@ -82,12 +73,24 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         QtWidgets.QDialog.__init__(self)
         self.ui = uic.loadUi(os.path.join(os.path.dirname(__file__), "mainwindow2.ui"),self)
         self.player = QtMultimedia.QMediaPlayer(None, QtMultimedia.QMediaPlayer.VideoSurface)
+        # self.player = QtMultimedia.QMediaPlayer()
+
         self.tabWidget.setCurrentIndex(0)
         self.help_tabWidget.setCurrentIndex(0)
-        file = os.path.join(os.path.dirname(__file__), "small.mp4")
-        self.player.setMedia(QtMultimedia.QMediaContent(QtCore.QUrl.fromLocalFile(file)))
-        self.player.setVideoOutput(self.ui.widget)
-        self.player.play()
+
+        # Conncect to Webcam
+        self.available_cameras = QCameraInfo.availableCameras()
+        if not self.available_cameras:
+            pass #quit
+
+        # Set the default camera.
+        self.camera = QCamera(self.available_cameras[0])
+        self.camera.setViewfinder(self.ui.widget)
+        self.camera.setCaptureMode(QCamera.CaptureStillImage)
+        self.camera.error.connect(lambda: self.alert(self.camera.errorString()))
+        self.camera.start()
+
+        
         self.getUser()
         ################################
         
@@ -100,9 +103,23 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.show_users_table_data()
         self.show_products_table_data()
         ################################
+    
+    def select_camera(self, i):
+        self.camera = QCamera(self.available_cameras[i])
+        self.camera.setViewfinder(self.viewfinder)
+        self.camera.setCaptureMode(QCamera.CaptureStillImage)
+        self.camera.error.connect(lambda: self.alert(self.camera.errorString()))
+        self.camera.start()
+
+        # self.capture = QCameraImageCapture(self.camera)
+        # self.capture.error.connect(lambda i, e, s: self.alert(s))
+        # self.capture.imageCaptured.connect(lambda d, i: self.status.showMessage("Image %04d captured" % self.save_seq))
+
+        self.current_camera_name = self.available_cameras[i].description()
+        self.save_seq = 0
 
     def show_users_table_data(self):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -123,7 +140,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.db.close()
 
     def show_products_table_data(self):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -164,10 +181,6 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.setStatus()
 
     def handleButtons(self):
-        if stat == 1 or stat == 2:
-            if stat == 2:
-                self.settingsButton.setEnabled(False)
-            self.databaseButton.setEnablrd(False)
         self.homeButton.clicked.connect(self.openHomeTab)
         self.staticsButton.clicked.connect(self.openStaticsTab)
         # Go to Database Page
@@ -231,7 +244,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.productType_2.setText(self.productComboBox_2.currentText())
         
     def add_product_func(self):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -256,7 +269,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
 
     def search_product(self):
         product_code = self.lineEdit_3.text()
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -272,7 +285,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
 
     def delete_product(self):
         product_code = self.lineEdit_3.text()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -297,7 +310,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         original_product_code = self.lineEdit_3.text()
         product_name = self.lineEdit_14.text()
         product_code = self.lineEdit_15.text()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -321,7 +334,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
 
 
     def add_new_user(self):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -348,7 +361,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
     
     def search_user(self):
         username = self.lineEdit_2.text()
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -379,22 +392,20 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         fname = self.lineEdit_6.text()
         lname = self.lineEdit_7.text()
         post = self.user_post.currentText()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
         self.cur.execute('''SET character_set_connection=utf8;''')
         self.cur.execute('''SET character_set_database=utf8;''')
         self.cur.execute('''SET character_set_server=utf8;''')
-        if (username != '') or (password != '') or (fname != '') or (lname != '') or (username_user != original_user_name):
+        if (username != '') or (password != '') or (fname != '') or (lname != ''):
             self.cur.execute('''
                 DELETE FROM users WHERE user_name = %s
             ''', [original_user_name])
             self.db.commit()
             self.statusBar().showMessage('User Deleted')
             self.db.close()
-        elif username_user == original_user_name:
-            print('ERROR. --> Access Denied!')
         else:
             print('ERROR. --> Fill out the form first!')
 
@@ -412,7 +423,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         fname = self.lineEdit_6.text()
         lname = self.lineEdit_7.text()
         post = self.user_post.currentText()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -444,7 +455,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
     def login(self):
         username = self.lineEdit_9.text()
         password = self.lineEdit_8.text()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -468,7 +479,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         password = self.lineEdit_11.text()
         fname = self.lineEdit_12.text()
         lname = self.lineEdit_13.text()
-        self.db = MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db = MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -680,7 +691,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
     ################Save Error to DataBase##########################
 
     def saveErDb(self, date, time, error):
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -704,7 +715,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         productType=self.productComboBox.currentText()
 
         #username = self.lineEdit_2.text()
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
@@ -738,7 +749,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         date=day + "/" + month + "/" + year
 
         try:
-            self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+            self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
             self.cur = self.db.cursor()
             self.cur.execute('''SET character_set_results=utf8;''')
             self.cur.execute('''SET character_set_client=utf8;''')
@@ -776,7 +787,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
     def barGraph(self, date, data):
         try:##chnage if possible-> make one function
             self.barGraphLayout.itemAt(0).widget().deleteLater()
-            self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+            self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
             self.cur = self.db.cursor()
             self.cur.execute('''SET character_set_results=utf8;''')
             self.cur.execute('''SET character_set_client=utf8;''')
@@ -854,7 +865,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
             chartView.setRenderHint(QPainter.Antialiasing)
             self.barGraphLayout.addWidget(chartView)
         except:
-            self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+            self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
             self.cur = self.db.cursor()
             self.cur.execute('''SET character_set_results=utf8;''')
             self.cur.execute('''SET character_set_client=utf8;''')
@@ -938,7 +949,7 @@ class MainApp(QMainWindow,QtWidgets.QDialog):
         self.productComboBox.clear()
         self.productComboBox_2.clear()
         
-        self.db =  MySQLdb.connect(host='localhost', user='root', password='mobina5158778489', db='bonyad')
+        self.db =  MySQLdb.connect(host='localhost', user='root', password='*#@mir#*1261', db='bonyad')
         self.cur = self.db.cursor()
         self.cur.execute('''SET character_set_results=utf8;''')
         self.cur.execute('''SET character_set_client=utf8;''')
