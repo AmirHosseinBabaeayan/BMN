@@ -2,9 +2,9 @@
 
 Bonyad Meli Nokhbegan Project
 
-## Qt Application for Object Detection
+## Application for Object Detection
 
-Team :
+Team 1 :
 
 Mobina Mosannafat
 
@@ -14,11 +14,21 @@ Amir Hossein Khodabandelo
 
 Amir Hossein Babaeayan
 
+Team  :
+
+Mahsa Bahrami
+
+Alireza Ghorbani
+
+Ali Javidani
+
+
+
 Supervisor :
 
 Dr, Hassan Khotanlo
 
 Last Update :
-13-04-2021
+22-07-2021
 
 
