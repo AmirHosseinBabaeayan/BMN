@@ -4,7 +4,7 @@ Bonyad Meli Nokhbegan Project
 
 ## Application for Object Detection
 
-Team 1 :
+Development Team  :
 
 Mobina Mosannafat
 
@@ -12,15 +12,15 @@ Fatemeh Taherinezhad
 
 Amir Hossein Khodabandelo
 
-Amir Hossein Babaeayan
+Amir Hossein Babaeayan (Head)
 
-Team  :
+Research Team  :
 
 Mahsa Bahrami
 
 Arash Ghorbani
 
-Ali Javidani
+Ali Javidani (Head)
 
 
 
